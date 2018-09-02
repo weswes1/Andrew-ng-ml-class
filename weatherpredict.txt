@@ -1,0 +1,201 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+\title{Weather Prediction Model}
+\author{Wesley Guergah}
+\date{July 2018}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction / Linear Fit}
+I am using data from the NOAA (National Oceanic and Atmospheric Administration) to create a predictive model of weather. This is a simple model, using average temperature values from the years 1895-2017.
+\newline
+This is the main section of my program:
+\newline
+\\
+load ('data.txt');
+\newline
+\\
+I imported the data from NOAA into matlab as a two column matrix.
+\\
+\\
+Store the year and temperature data in vectors.
+\newline
+\\
+Year=data(:,1);
+\newline
+Temperature=data(:,2);
+\\
+\newline
+Store the number of training examples in a variable m:
+\newline
+\\
+m=size(Year,1);
+\newline
+\\
+Here, I want to use the normal equation to get a linear best fit to the data, before going on to further work. It will provide a benchmark for comparison, and is also valuable in itself.
+\\
+The normal equation is given as:
+\\
+\\
+$\theta=(X^T*X)^{-1}*X^T*y$
+\\
+\\
+$Year_2=[ones(size(Year(:,1))),Year]$;
+\newline
+\\
+$theta = inv(Year_2'*Year_2)*Year_2'*Temperature$;
+\newline
+\\
+$y=[theta(2,1)*1895+theta(1,1),theta(2,1)*2017+theta(1,1)]$;
+\\
+\newline
+x=[1895,2017];
+\newline
+I plot both the original data and the best fit line:
+\\
+plot(Year, Temperature, 'rx', 'MarkerSize', 5, 'LineWidth',2);
+\newline
+xlabel('Year');
+\newline
+ylabel('Temperature');
+\newline
+hold on;
+\newline
+plot(x,y);
+\newline
+hold off;
+\\
+Using a linear best fit for the data, we predict an average temperature of ~13.3 Celsius ~55.9 degrees Fahrenheit in the year 2200, approximately a 2.5 Percent increase in national average temperatures from the year 2017.
+\\
+As an aside, one can use the "lsline" function in matlab to find the least squares linear fit to the data
+\\
+\\
+\includegraphics{linearfit.png}
+\section{Polynomial Fit}
+In this section, I implement gradient descent to create a learning algorithm for weather prediction. I find a theta parameter that minimizes the cost function. The cost function essentially measures the distance from the prediction function to the data. Using the learning parameter theta, I create predictions on years outside of the data range. In the last step, I used the year 2200, and got a result of 56.7 degrees. This is an even more dramatic result than the linear case. 
+\\
+Below is the .main file:
+\\
+load ('data.txt');
+\\
+X = data(:,1);
+\\
+y = data(:,2);
+\\
+m = length(y); 
+\\
+X = polyFeatures(X,6);   % Add Polynomial Features
+\\
+mu = mean(X);  
+\\
+% Normalize the matrix
+X = bsxfun(@minus, X, mu);
+\\
+sigma = std(X);
+\\
+X = bsxfun(@rdivide, X, sigma);
+\\
+X = [ones(size(X(:,1))), X];
+% Add ones
+\\
+initialtheta = (zeros(1,size(X,2)))';
+\\
+mintheta = gradientDescent(X,y,initialtheta); 
+\\
+predictvector = zeros(length(mu),1);
+\\
+year = 2200;
+\\
+for i=1:length(mu)
+\\
+predictvector(i)=$year^i$;
+\\
+end
+\\
+for i=1:length(mu)
+\\
+predictvector(i)=predictvector(i)-mu(i);
+\\
+predictvector(i)=predictvector(i)/sigma(i);
+\\
+end
+\\
+predictvector = [1; predictvector];
+\\
+p = dot(predictvector,mintheta);
+\\
+disp(p);
+\\
+\\
+Here is the cost function:
+\\
+function [J, grad] = costFunc(X, y, theta)
+\\
+J=sum((X*theta-y).$^2$)/(2*m);
+\\
+\\
+Here is the polynomial features function:
+\\
+function Xpoly = polyFeatures(X,p)
+\\
+Xpoly = zeros(numel(X), p);
+\\
+for i=1:p
+\\
+Xpoly(:,i)=X.$^$i;
+\\
+end
+\\
+function theta = gradientDescent(X, y, theta)
+\\
+alpha=.001;
+\\
+numiters=10000;
+\\
+m = length(y); 
+% number of training examples
+\\
+This is the gradient descent algorithm.
+\\
+for iter = 1:numiters
+\\
+r = zeros(m,1);
+    \\
+    p = zeros(length(theta),1);
+    \\
+      for i = 1 : m
+      \\
+        for j = 1 : length(theta)
+        \\
+            r(i) = r(i) + theta(j) * X(i, j); 
+            \\
+        end
+      end
+      \\
+     for j = 1 : length(theta)
+     \\
+     for i = 1 : m
+     \\
+         p(j) = p(j) + (r(i) - y(i)) * X(i, j);
+     end 
+     \\
+     theta(j) = theta(j) - alpha/m * p(j);
+     \\
+     end 
+     \\
+end
+\\
+Summary:
+\\
+The polynomial fit to the data makes comparable predictions to the linear fit. However, it predicts a worse outcome for the year 2200.
+\\
+Using the polynomial learning algorithm, we predict an average U.S. temperature of 56.6779
+degrees.
+\\
+
+\end{document}
